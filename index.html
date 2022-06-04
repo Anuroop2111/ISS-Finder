@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css"
+    integrity="sha512-hoalWLoI8r4UszCkZ5kL8vayOGVae1oxXe/2A4AO6J9+580uKHDO3JdHb7NzwwzK5xr/Fs0W40kiNHxM9vyTtQ=="
+    crossorigin=""/>
+
+    <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"
+   integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ=="
+   crossorigin=""></script>
+
+
+    <title>Where the ISS at?</title>
+</head>
+<body>
+
+    <h1><u>The ISS</u></h1>
+    <b><h3>This page shows the <span style="color: red;">Live</span> location of the International Space Station.</h3></b> 
+
+    <p>
+        Name: <span id="name"></span><br><br>
+        <b>Latitude:</b> <span id="lat"></span>°<br>
+        <b>Longitude:</b> <span id="long"></span>°<br><br>
+        Location: <span id="loc"></span><br><br>
+        Altitude: <span id="alt"></span> km<br>
+        Velocity: <span id="vel"></span> km/h<br><br>
+        Visibility: <span id="vis"></span>
+
+    </p>
+    <style>
+          h1,h3 {
+            text-align: center;
+            
+            }
+
+          
+    </style>
+     
+    <div id="Map"> <!--We need to create a Div container, where the map will be displayed.--> 
+
+    </div>
+
+    <!--The height for the map should be specified.-->
+    <style>
+        #Map{
+            height: 400px;
+        }
+
+    </style>
+
+    <script>
+        const mymap = L.map('Map').setView([0, 0], 1); //This is a map object, which should be created for the map to come to the page.
+                                        // Latitude, longitude, zoom capacity.
+                                        // L is from leaflet library.
+        
+        //Making tile for the map
+        const attribution = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+        const tileUrl = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+        const tiles = L.tileLayer(tileUrl,{attribution});
+        tiles.addTo(mymap); //Adding tiles or visibility to the map object.
+
+
+        const myIcon = L.icon({
+            iconUrl: 'iss.png',
+            iconSize: [50, 32],
+            iconAnchor: [25, 16]
+        });
+        
+        const marker =  L.marker([0, 0],{icon: myIcon}).addTo(mymap);
+        
+
+        const iss_api_url = 'https://api.wheretheiss.at/v1/satellites/25544';
+
+        let flag = true;
+        async function getData() {
+            const response = await fetch(iss_api_url); //using fetch api.
+            const data = await response.json(); //Converting the response into json format.
+            const {name, latitude, longitude, altitude, visibility,velocity} = data; //Taking the elements from data or object and storing them in seperate variables.
+            
+            //L.marker([latitude, longitude]).addTo(mymap);//We have to add the marker to the object 'mymap'
+            marker.setLatLng([latitude,longitude]);
+
+            if(flag) //So that only the first time we opens the page, the map gets set. Otherwise, every 1 second the map gets set and we cannot zoom properly.
+            {
+                mymap.setView([latitude,longitude],2);
+                flag = false; 
+            }
+
+           // Object.defineProperty(String.prototype, 'capitalize', { //This is required to use '.capitalise' function.
+           // value: function() {
+          //  return this.charAt(0).toUpperCase() + this.slice(1);
+          //  },
+          //  enumerable: false
+          //  });
+
+            // const capitaliseVisibility = await visibility.map(function (elem,index){
+            //     if (index===0){
+            //         return elem.toUpperCase()
+            //     }
+            //     else{
+            //         return elem
+            //     }
+            // })
+            console.log(visibility?.map)
+
+            document.getElementById('name').textContent = name.toUpperCase()
+            document.getElementById('lat').textContent = latitude.toFixed(6)
+            document.getElementById('long').textContent = longitude.toFixed(6)
+            document.getElementById('alt').textContent = altitude.toFixed(2)
+            document.getElementById('vel').textContent = velocity.toFixed(2)
+            document.getElementById('vis').textContent = visibility.toString() //visibility //.capitalize();        
+
+            //const geoc = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latitude},${longitude}&sensor=false`);
+            //console.log(await geoc.json())
+            
+
+            
+        }
+       
+        getData();
+        setInterval(getData,1000) //This calls the fn 'getData' every 1000 milliseconds.
+                                  // Wheretheiss.at website specifies that you can only give requests every 1 second.
+
+    </script>
+    
+</body>
+</html>
